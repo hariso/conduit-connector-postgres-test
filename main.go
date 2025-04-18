@@ -26,7 +26,7 @@ func main() {
 	ctx := context.Background()
 	initStandaloneModeLogger(zerolog.DebugLevel)
 
-	src := newSource(ctx, nil)
+	src := createNewSourceAndOpen(ctx, nil)
 
 	recordsToInsertInt := insertRows("1")
 	records, err := src.ReadN(ctx, 1)
@@ -45,7 +45,7 @@ func main() {
 	}
 	recordsToInsertInt = insertRows(recordsToInsert)
 
-	src = newSource(ctx, position)
+	src = createNewSourceAndOpen(ctx, position)
 	defer func() {
 		teardownErr := src.Teardown(ctx)
 		if teardownErr != nil {
@@ -84,7 +84,7 @@ func main() {
 	fmt.Printf("- Read rate: %.2f records/second\n", recordsPerSecond)
 }
 
-func newSource(ctx context.Context, pos opencdc.Position) sdk.Source {
+func createNewSourceAndOpen(ctx context.Context, pos opencdc.Position) sdk.Source {
 	fmt.Printf("creating new position %v\n", pos)
 	src := postgres.Connector.NewSource()
 	cfg := config.Config{
