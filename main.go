@@ -20,6 +20,20 @@ var (
 	defaultBatchSize          = 10000
 	defaultRecordsToInsert    = 1000000
 	defaultRecordsToInsertStr = fmt.Sprintf("%d", defaultRecordsToInsert)
+	connectorCfg              = config.Config{
+		"tables":                             "employees",
+		"url":                                "postgresql://meroxauser:meroxapass@localhost:5432/meroxadb",
+		"cdcMode":                            "logrepl",
+		"logrepl.slotName":                   "conduit_slot",
+		"logrepl.publicationName":            "conduit_pub",
+		"logrepl.autoCleanup":                "true",
+		"logrepl.withAvroSchema":             "false",
+		"snapshotMode":                       "never",
+		"sdk.batch.size":                     fmt.Sprintf("%d", defaultBatchSize),
+		"sdk.batch.delay":                    "1s",
+		"sdk.schema.extract.key.enabled":     "false",
+		"sdk.schema.extract.payload.enabled": "false",
+	}
 )
 
 func main() {
@@ -87,21 +101,7 @@ func main() {
 func createNewSourceAndOpen(ctx context.Context, pos opencdc.Position) sdk.Source {
 	fmt.Printf("creating new position %v\n", pos)
 	src := postgres.Connector.NewSource()
-	cfg := config.Config{
-		"tables":                             "employees",
-		"url":                                "postgresql://meroxauser:meroxapass@localhost:5432/meroxadb",
-		"cdcMode":                            "logrepl",
-		"logrepl.slotName":                   "conduit_slot",
-		"logrepl.publicationName":            "conduit_pub",
-		"logrepl.autoCleanup":                "true",
-		"logrepl.withAvroSchema":             "false",
-		"snapshotMode":                       "never",
-		"sdk.batch.size":                     fmt.Sprintf("%d", defaultBatchSize),
-		"sdk.batch.delay":                    "1s",
-		"sdk.schema.extract.key.enabled":     "false",
-		"sdk.schema.extract.payload.enabled": "false",
-	}
-	err := sdk.Util.ParseConfig(ctx, cfg, src.Config(), postgres.Connector.NewSpecification().SourceParams)
+	err := sdk.Util.ParseConfig(ctx, connectorCfg, src.Config(), postgres.Connector.NewSpecification().SourceParams)
 	if err != nil {
 		panic(fmt.Errorf("error parsing config: %v", err))
 	}
