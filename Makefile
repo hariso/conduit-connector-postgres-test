@@ -88,22 +88,21 @@ reset-table:
 		(echo "Failed to reset table. Is the database running?"; exit 1)
 	@echo "Table reset complete."
 
-.PHONY: use-updated-pg-connector
-use-updated-pg-connector:
-	@go get github.com/conduitio/conduit-connector-postgres@ab22ca81bb27
-	@go mod tidy
-
-.PHONY: use-latest-pg-connector
-use-latest-pg-connector:
-	@go get github.com/conduitio/conduit-connector-postgres@latest
-	@go mod tidy
-
 .PHONY: reset-db
 reset-db: stop clean-all start
 	@sleep 3
 
-.PHONY: run
-run: reset-db
+.PHONY: run-with-updated-version
+run-with-updated-version: reset-db
+	@go get github.com/conduitio/conduit-connector-postgres@ab22ca81bb27
+	@go mod tidy
+	@echo "Running main.go..."
+	@go run main.go || (echo "Error running main.go"; exit 1)
+
+.PHONY: run-with-latest-version
+run-with-latest-version: reset-db
+	@go get github.com/conduitio/conduit-connector-postgres@latest
+	@go mod tidy
 	@echo "Running main.go..."
 	@go run main.go || (echo "Error running main.go"; exit 1)
 
