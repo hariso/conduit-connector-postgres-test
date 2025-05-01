@@ -17,8 +17,9 @@ import (
 )
 
 var (
-	defaultBatchSize          = 10000
-	defaultRecordsToInsert    = 1000000
+	defaultBatchSize          = 10
+	loggingBatchSize          = 5 * defaultBatchSize
+	defaultRecordsToInsert    = 100
 	defaultRecordsToInsertStr = fmt.Sprintf("%d", defaultRecordsToInsert)
 	connectorCfg              = config.Config{
 		"tables":                             "employees",
@@ -73,12 +74,12 @@ func main() {
 	start := time.Now()
 
 	for i := 0; i < recordsToInsertInt; {
-		recs, err := src.ReadN(ctx, defaultRecordsToInsert)
+		recs, err := src.ReadN(ctx, defaultBatchSize)
 		if err != nil {
 			panic(fmt.Errorf("error reading from source: %v", err))
 		}
 
-		if i%(10*defaultBatchSize) == 0 {
+		if i%(loggingBatchSize) <= 100 {
 			elapsed := time.Since(start).Seconds()
 			fmt.Printf("total count: %v, elapsed: %v, rate: %v/s\n", i, elapsed, math.Round(float64(i)/elapsed))
 		}
@@ -101,7 +102,12 @@ func main() {
 func createNewSourceAndOpen(ctx context.Context, pos opencdc.Position) sdk.Source {
 	fmt.Printf("creating new position %v\n", pos)
 	src := postgres.Connector.NewSource()
-	err := sdk.Util.ParseConfig(ctx, connectorCfg, src.Config(), postgres.Connector.NewSpecification().SourceParams)
+	err := sdk.Util.ParseConfig(
+		ctx,
+		connectorCfg,
+		src.Config(),
+		postgres.Connector.NewSpecification().SourceParams,
+	)
 	if err != nil {
 		panic(fmt.Errorf("error parsing config: %v", err))
 	}

@@ -92,17 +92,26 @@ reset-table:
 reset-db: stop clean-all start
 	@sleep 3
 
-.PHONY: run-with-updated-version
-run-with-updated-version: reset-db
-	@go get github.com/conduitio/conduit-connector-postgres@ab22ca81bb27
+.PHONY: get-updated-version
+get-updated-version:
+	@echo "Fetching latest commit from haris/read-n-batches branch..."
+	@latest_commit=$$(git ls-remote https://github.com/conduitio/conduit-connector-postgres refs/heads/haris/read-n-batches | cut -f1); \
+	go get github.com/conduitio/conduit-connector-postgres@$$latest_commit
 	@go mod tidy
-	@echo "Running main.go..."
-	@go run main.go || (echo "Error running main.go"; exit 1)
 
-.PHONY: run-with-latest-version
-run-with-latest-version: reset-db
+.PHONY: run-with-updated-version
+run-with-updated-version: reset-db get-updated-version run
+
+.PHONY: get-latest-version
+get-latest-version:
 	@go get github.com/conduitio/conduit-connector-postgres@latest
 	@go mod tidy
+
+.PHONY: run-with-latest-version
+run-with-latest-version: reset-db get-latest-version run
+
+.PHONY: run
+run:
 	@echo "Running main.go..."
 	@go run main.go || (echo "Error running main.go"; exit 1)
 

@@ -4,10 +4,12 @@ go 1.24.2
 
 require (
 	github.com/conduitio/conduit-commons v0.5.2
-	github.com/conduitio/conduit-connector-postgres v0.11.3-0.20250416164008-ab22ca81bb27
+	github.com/conduitio/conduit-connector-postgres v0.11.3-0.20250501122206-76c1489dc8f2
 	github.com/conduitio/conduit-connector-sdk v0.13.3
 	github.com/rs/zerolog v1.34.0
 )
+
+replace github.com/conduitio/conduit-connector-postgres => /home/haris/projects/conduitio/conduit-connector-postgres
 
 require (
 	4d63.com/gocheckcompilerdirectives v1.3.0 // indirect
