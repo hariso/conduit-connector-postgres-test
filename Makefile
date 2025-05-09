@@ -2,7 +2,7 @@
 
 # Variables
 SERVICE_NAME = test-pg-connector
-DEFAULT_RECORDS = 10000000
+RECORDS = 10000000
 DB_USER = meroxauser
 DB_NAME = meroxadb
 DB_HOST = localhost
@@ -29,9 +29,8 @@ help:
 	@echo "  reset-table       Truncate the 'employees' table and reset IDs"
 	@echo "  reset-db          Stop, clean, and restart the database"
 	@echo "  get-connector     Fetch and use latest connector from specified branch"
-	@echo "  run-with-version  Reset DB, get connector, and run main.go"
-	@echo "  run               Run main.go"
-	@echo "  run-custom        Run main.go with a custom record count (use RECORDS=...)"
+	@echo "  run-with-version  Run the test using a specific version of the connector, e.g. POSTGRES_BRANCH=branch-name-here make run-with-version"
+	@echo "  run        	   Run main.go with a custom record count (usage: make run RECORDS=<number of records>)"
 
 # Start the PostgreSQL container in detached mode
 start:
@@ -116,13 +115,8 @@ run-with-version: reset-db get-connector run
 
 .PHONY: run
 run:
-	@echo "Running main.go..."
-	@go run main.go || (echo "Error running main.go"; exit 1)
-
-# Run the main.go application with custom record count
-run-custom: start reset-table
 	@if [ -z "$(RECORDS)" ]; then \
-		echo "Error: RECORDS parameter is required. Usage: make run-custom RECORDS=5000"; \
+		echo "Error: RECORDS parameter is required. Usage: make run RECORDS=<number of records>"; \
 		exit 1; \
 	fi
 	@echo "Running main.go with $(RECORDS) records..."
