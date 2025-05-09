@@ -17,13 +17,13 @@ import (
 )
 
 var (
-	defaultBatchSize          = 10
+	defaultBatchSize          = 10_000
 	loggingBatchSize          = 5 * defaultBatchSize
-	defaultRecordsToInsert    = 100
+	defaultRecordsToInsert    = 1_000_000
 	defaultRecordsToInsertStr = fmt.Sprintf("%d", defaultRecordsToInsert)
 	connectorCfg              = config.Config{
 		"tables":                             "employees",
-		"url":                                "postgresql://meroxauser:meroxapass@localhost:5432/meroxadb",
+		"url":                                "postgresql://meroxauser:meroxapass@benchi-postgres:5432/meroxadb",
 		"cdcMode":                            "logrepl",
 		"logrepl.slotName":                   "conduit_slot",
 		"logrepl.publicationName":            "conduit_pub",
@@ -79,11 +79,16 @@ func main() {
 			panic(fmt.Errorf("error reading from source: %v", err))
 		}
 
-		if i%(loggingBatchSize) <= 100 {
-			elapsed := time.Since(start).Seconds()
-			fmt.Printf("total count: %v, elapsed: %v, rate: %v/s\n", i, elapsed, math.Round(float64(i)/elapsed))
-		}
+		elapsed := time.Since(start).Seconds()
+		fmt.Printf("total count: %v, elapsed: %v, rate: %v/s\n", i, elapsed, math.Round(float64(i)/elapsed))
 
+		for _, rec := range recs {
+			err = src.Ack(ctx, rec.Position)
+			if err != nil {
+				panic(fmt.Errorf("error acking from source: %v", err))
+			}
+		}
+		// fmt.Printf("test loop got records: %v\n", len(recs))
 		i += len(recs)
 	}
 
