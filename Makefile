@@ -8,22 +8,30 @@ DB_NAME = meroxadb
 DB_HOST = localhost
 DB_PORT = 5432
 
-# Declare phony targets
-.PHONY: start stop restart logs status clean clean-all help run run-custom reset-table wait-for-db
+# Default branch to use if not specified
+POSTGRES_BRANCH ?= haris/read-n-batches-handler-refactor
+# POSTGRES_BRANCH ?= haris/read-n-batches
+POSTGRES_REPO ?= https://github.com/conduitio/conduit-connector-postgres
 
-# Default target
+.PHONY: help
 help:
-	@echo "Available commands:"
-	@echo "  make start       - Start the PostgreSQL container in detached mode"
-	@echo "  make stop        - Stop the PostgreSQL container"
-	@echo "  make restart     - Restart the PostgreSQL container"
-	@echo "  make logs        - Show logs from the PostgreSQL container"
-	@echo "  make status      - Check the status of the PostgreSQL container"
-	@echo "  make clean       - Stop and remove the container and volumes"
-	@echo "  make run         - Run main.go with default $(DEFAULT_RECORDS) records"
-	@echo "  make run-custom  - Run main.go with custom record count (e.g., make run-custom RECORDS=5000)"
-	@echo "  make reset-table - Reset the employees table (clear all data)"
-	@echo "  make help        - Show this help message"
+	@echo "Makefile for managing PostgreSQL container and related tasks"
+	@echo ""
+	@echo "Available targets:"
+	@echo "  start             Start the PostgreSQL container"
+	@echo "  stop              Stop the PostgreSQL container"
+	@echo "  restart           Restart the PostgreSQL container"
+	@echo "  logs              Show logs from the PostgreSQL container"
+	@echo "  status            Show the status of the PostgreSQL container"
+	@echo "  clean             Stop and remove the container"
+	@echo "  clean-all         Remove container, volumes, and data"
+	@echo "  wait-for-db       Wait for the database to become ready"
+	@echo "  reset-table       Truncate the 'employees' table and reset IDs"
+	@echo "  reset-db          Stop, clean, and restart the database"
+	@echo "  get-connector     Fetch and use latest connector from specified branch"
+	@echo "  run-with-version  Reset DB, get connector, and run main.go"
+	@echo "  run               Run main.go"
+	@echo "  run-custom        Run main.go with a custom record count (use RECORDS=...)"
 
 # Start the PostgreSQL container in detached mode
 start:
@@ -68,7 +76,6 @@ clean-all:
 	docker compose down -v
 	@echo "PostgreSQL container, volumes, and data removed"
 
-# Wait for the database to be ready
 wait-for-db:
 	@for i in $$(seq 1 30); do \
 		if docker exec $(SERVICE_NAME) pg_isready -U $(DB_USER) -d $(DB_NAME) > /dev/null 2>&1; then \
@@ -81,7 +88,6 @@ wait-for-db:
 	echo "ERROR: Database did not become ready in time"; \
 	exit 1
 
-# Reset the employees table
 reset-table:
 	@echo "Resetting employees table..."
 	@docker exec $(SERVICE_NAME) psql -U $(DB_USER) -d $(DB_NAME) -c "TRUNCATE TABLE employees RESTART IDENTITY;" || \
@@ -92,23 +98,21 @@ reset-table:
 reset-db: stop clean-all start
 	@sleep 3
 
-.PHONY: get-updated-version
-get-updated-version:
-	@echo "Fetching latest commit from haris/read-n-batches branch..."
-	@latest_commit=$$(git ls-remote https://github.com/conduitio/conduit-connector-postgres refs/heads/haris/read-n-batches | cut -f1); \
+.PHONY: get-connector
+get-connector:
+	@echo "Fetching latest commit from $(POSTGRES_BRANCH) branch..."
+	@latest_commit=$$(git ls-remote $(POSTGRES_REPO) refs/heads/$(POSTGRES_BRANCH) | cut -f1); \
+	if [ -z "$$latest_commit" ]; then \
+		echo "Error: Branch $(POSTGRES_BRANCH) not found in repository"; \
+		exit 1; \
+	fi; \
+	echo "Found commit: $$latest_commit"; \
 	go get github.com/conduitio/conduit-connector-postgres@$$latest_commit
 	@go mod tidy
+	@echo "Updated to latest commit from $(POSTGRES_BRANCH)"
 
-.PHONY: run-with-updated-version
-run-with-updated-version: reset-db get-updated-version run
-
-.PHONY: get-latest-version
-get-latest-version:
-	@go get github.com/conduitio/conduit-connector-postgres@latest
-	@go mod tidy
-
-.PHONY: run-with-latest-version
-run-with-latest-version: reset-db get-latest-version run
+.PHONY: run-with-version
+run-with-version: reset-db get-connector run
 
 .PHONY: run
 run:

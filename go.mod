@@ -4,7 +4,7 @@ go 1.24.2
 
 require (
 	github.com/conduitio/conduit-commons v0.5.2
-	github.com/conduitio/conduit-connector-postgres v0.12.2-0.20250508111241-4b6e350ef234
+	github.com/conduitio/conduit-connector-postgres v0.12.2-0.20250509152027-a4a8d813fc77
 	github.com/conduitio/conduit-connector-sdk v0.13.3
 	github.com/rs/zerolog v1.34.0
 )

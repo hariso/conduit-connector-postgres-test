@@ -73,14 +73,18 @@ func main() {
 
 	start := time.Now()
 
+	nextLoggingIndex := loggingBatchSize
 	for i := 0; i < recordsToInsertInt; {
 		recs, err := src.ReadN(ctx, defaultBatchSize)
 		if err != nil {
 			panic(fmt.Errorf("error reading from source: %v", err))
 		}
 
-		elapsed := time.Since(start).Seconds()
-		fmt.Printf("total count: %v, elapsed: %v, rate: %v/s\n", i, elapsed, math.Round(float64(i)/elapsed))
+		if i >= nextLoggingIndex {
+			elapsed := time.Since(start).Seconds()
+			fmt.Printf("total count: %v, elapsed: %v, rate: %v/s\n", i, elapsed, math.Round(float64(i)/elapsed))
+			nextLoggingIndex += loggingBatchSize
+		}
 
 		for _, rec := range recs {
 			err = src.Ack(ctx, rec.Position)
