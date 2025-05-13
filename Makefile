@@ -2,13 +2,12 @@
 
 # Variables
 SERVICE_NAME = test-pg-connector
-RECORDS = 10000000
 DB_USER = meroxauser
 DB_NAME = meroxadb
 DB_HOST = localhost
 DB_PORT = 5432
 
-# Default branch to use if not specified
+RECORDS ?= 10000000
 POSTGRES_BRANCH ?= haris/read-n-batches-handler-refactor
 # POSTGRES_BRANCH ?= haris/read-n-batches
 POSTGRES_REPO ?= https://github.com/conduitio/conduit-connector-postgres
